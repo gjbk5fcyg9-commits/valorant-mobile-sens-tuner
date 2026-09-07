@@ -1,0 +1,47 @@
+name: Build iOS (unsigned)
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-ios:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Flutter pub get
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Test
+        run: flutter test
+
+      - name: Build iOS (simulator, no signing)
+        run: flutter build ios --simulator --debug
+
+      - name: Build iOS device (unsigned framework compile check)
+        run: flutter build ios --no-codesign
+
+      - name: Upload iOS simulator app artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sens-tuner-ios-simulator
+          path: build/ios/iphonesimulator/
+          if-no-files-found: warn
+
+      - name: Upload iOS device build (unsigned)
+        uses: actions/upload-artifact@v4
+        with:
+          name: sens-tuner-ios-device-nosign
+          path: build/ios/iphoneos/
+          if-no-files-found: warn
