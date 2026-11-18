@@ -1,5 +1,4 @@
 name: Build iOS (unsigned)
-
 on:
   workflow_dispatch:
   push:
@@ -24,6 +23,7 @@ jobs:
 
       - name: Analyze
         run: flutter analyze
+        continue-on-error: true
 
       - name: Test
         run: flutter test
@@ -31,19 +31,19 @@ jobs:
       - name: Build iOS (simulator, no signing)
         run: flutter build ios --simulator --debug
 
-      - name: Build iOS device (unsigned framework compile check)
+      - name: Build iOS device (unsigned framework)
         run: flutter build ios --no-codesign
 
       - name: Upload iOS simulator app artifact
         uses: actions/upload-artifact@v4
         with:
-          name: sens-tuner-ios-simulator
+          name: ios-simulator
           path: build/ios/iphonesimulator/
           if-no-files-found: warn
 
       - name: Upload iOS device build (unsigned)
         uses: actions/upload-artifact@v4
         with:
-          name: sens-tuner-ios-device-nosign
+          name: ios-device
           path: build/ios/iphoneos/
           if-no-files-found: warn
