@@ -5,10 +5,6 @@ analyzer:
     - build/**
     - ios/**
     - android/**
-  errors:
-    deprecated_member_use: ignore
-    migrate_design_widgets: ignore
 
 linter:
   rules:
-    migrate_design_widgets: false
