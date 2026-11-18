@@ -7,7 +7,8 @@ analyzer:
     - android/**
   errors:
     deprecated_member_use: ignore
-    deprecated_member_use_from_same_package: ignore
+    migrate_design_widgets: ignore
 
 linter:
   rules:
+    migrate_design_widgets: false
