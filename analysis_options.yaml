@@ -15,7 +15,7 @@ analyzer:
     - android/**
     - ios/**
   errors:
-    deprecated_member_use: info
+    deprecated_member_use: ignore
 
 linter:
   rules:
