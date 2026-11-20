@@ -5,59 +5,27 @@ on:
   push:
     branches:
       - main
-    tags:
-      - 'v*'
   pull_request:
     branches:
       - main
 
 jobs:
   build-ios:
-    runs-on: macos-14
-    timeout-minutes: 30
+    runs-on: macos-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
-          cache: true
 
-      - name: Cache Pub dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.pub-cache
-            .dart_tool
-          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-pub-
+      - run: flutter pub get
 
-      - name: Flutter pub get
-        run: flutter pub get
+      - run: cd ios && pod install --no-repo-update
 
-      - name: Cache Pods
-        uses: actions/cache@v4
-        with:
-          path: ios/Pods
-          key: ${{ runner.os }}-pods-${{ hashFiles('**/ios/Podfile.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-pods-
-
-      - name: Pod install
-        run: |
-          cd ios
-          pod install --no-repo-update
-
-      - name: Analyze
-        run: flutter analyze
-        continue-on-error: true
-
-      - name: Build iOS (unsigned)
-        run: flutter build ios --release --no-codesign
+      - run: flutter build ios --release --no-codesign
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
