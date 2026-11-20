@@ -9,7 +9,8 @@ on:
 
 jobs:
   build-ios:
-    runs-on: macos-latest
+    runs-on: macos-14
+    timeout-minutes: 30  # 超时保护，避免卡死无限等待
     steps:
       - uses: actions/checkout@v4
 
@@ -17,9 +18,36 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: stable
+          cache: true  # 开启Flutter SDK缓存
+
+      # 缓存Pub依赖，避免每次重新下载
+      - name: Cache Pub dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pub-cache
+            .dart_tool
+          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pub-
 
       - name: Flutter pub get
         run: flutter pub get
+
+      # 缓存Pods依赖，避免每次重新安装
+      - name: Cache Pods dependencies
+        uses: actions/cache@v4
+        with:
+          path: ios/Pods
+          key: ${{ runner.os }}-pods-${{ hashFiles('**/ios/Podfile.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pods-
+
+      # 提前执行Pod安装，禁用仓库更新，解决CocoaPods卡死问题
+      - name: Pod install
+        run: |
+          cd ios
+          pod install --no-repo-update
 
       - name: Analyze
         run: flutter analyze
@@ -28,11 +56,13 @@ jobs:
       - name: Test
         run: flutter test
 
-      - name: Build iOS (simulator, no signing)
-        run: flutter build ios --simulator --debug
+      # 真机构建（unsigned，默认release模式）
+      - name: Build iOS device (unsigned)
+        run: flutter build ios --release --no-codesign
 
-      - name: Build iOS device (unsigned framework)
-        run: flutter build ios --no-codesign
+      # 模拟器构建（可选：不需要可直接删除此步，省近一半时间）
+      - name: Build iOS simulator
+        run: flutter build ios --simulator --debug
 
       - name: Upload iOS simulator app artifact
         uses: actions/upload-artifact@v4
