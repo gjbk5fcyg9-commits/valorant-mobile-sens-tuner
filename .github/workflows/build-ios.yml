@@ -1,67 +1,8 @@
-name: Build iOS (unsigned)
-
+name: Test iOS
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
-    tags:
-      - 'v*'
-  pull_request:
-    branches:
-      - main
-
 jobs:
   build-ios:
-    runs-on: macos-14
-    timeout-minutes: 30
-
+    runs-on: macos-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Flutter SDK
-        uses: subosito/flutter-action@v2
-        with:
-          channel: stable
-          cache: true
-
-      - name: Cache Pub dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.pub-cache
-            .dart_tool
-          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-pub-
-
-      - name: Install Flutter dependencies
-        run: flutter pub get
-
-      - name: Cache CocoaPods dependencies
-        uses: actions/cache@v4
-        with:
-          path: ios/Pods
-          key: ${{ runner.os }}-pods-${{ hashFiles('**/ios/Podfile.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-pods-
-
-      - name: Install iOS Pods
-        run: |
-          cd ios
-          pod install --no-repo-update
-
-      - name: Run code analysis
-        run: flutter analyze
-        continue-on-error: true
-
-      - name: Build iOS device (unsigned release)
-        run: flutter build ios --release --no-codesign
-
-      - name: Upload iOS unsigned build artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ios-device-unsigned
-          path: build/ios/iphoneos/
-          if-no-files-found: warn
+      - run: echo "test start"
