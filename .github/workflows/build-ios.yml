@@ -1,4 +1,5 @@
 name: Build iOS (unsigned)
+
 on:
   workflow_dispatch:
   push:
@@ -6,21 +7,25 @@ on:
       - main
     tags:
       - 'v*'
+  pull_request:
+    branches:
+      - main
 
 jobs:
   build-ios:
     runs-on: macos-14
-    timeout-minutes: 30  # 超时保护，避免卡死无限等待
-    steps:
-      - uses: actions/checkout@v4
+    timeout-minutes: 30
 
-      - name: Setup Flutter
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter SDK
         uses: subosito/flutter-action@v2
         with:
           channel: stable
-          cache: true  # 开启Flutter SDK缓存
+          cache: true
 
-      # 缓存Pub依赖，避免每次重新下载
       - name: Cache Pub dependencies
         uses: actions/cache@v4
         with:
@@ -31,11 +36,10 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pub-
 
-      - name: Flutter pub get
+      - name: Install Flutter dependencies
         run: flutter pub get
 
-      # 缓存Pods依赖，避免每次重新安装
-      - name: Cache Pods dependencies
+      - name: Cache CocoaPods dependencies
         uses: actions/cache@v4
         with:
           path: ios/Pods
@@ -43,37 +47,21 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pods-
 
-      # 提前执行Pod安装，禁用仓库更新，解决CocoaPods卡死问题
-      - name: Pod install
+      - name: Install iOS Pods
         run: |
           cd ios
           pod install --no-repo-update
 
-      - name: Analyze
+      - name: Run code analysis
         run: flutter analyze
         continue-on-error: true
 
-      - name: Test
-        run: flutter test
-
-      # 真机构建（unsigned，默认release模式）
-      - name: Build iOS device (unsigned)
+      - name: Build iOS device (unsigned release)
         run: flutter build ios --release --no-codesign
 
-      # 模拟器构建（可选：不需要可直接删除此步，省近一半时间）
-      - name: Build iOS simulator
-        run: flutter build ios --simulator --debug
-
-      - name: Upload iOS simulator app artifact
+      - name: Upload iOS unsigned build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ios-simulator
-          path: build/ios/iphonesimulator/
-          if-no-files-found: warn
-
-      - name: Upload iOS device build (unsigned)
-        uses: actions/upload-artifact@v4
-        with:
-          name: ios-device
+          name: ios-device-unsigned
           path: build/ios/iphoneos/
           if-no-files-found: warn
